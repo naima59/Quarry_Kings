@@ -1,0 +1,19 @@
+{
+	"C_Cpp.intelliSenseEngine": "disabled", 
+	"clangd.arguments": [ "--header-insertion=never" ],
+	"clangd.fallbackFlags": 
+	[
+		"-IC:/raylib/include",
+		"-ID:/My Real Documents/Programming/GitHub/Quarry_Kings/include",
+		"-I./include"
+	],
+	"files.exclude": {
+		"**/.git": true,
+		"**/.svn": true,
+		"**/.hg": true,
+		"**/CVS": true,
+		"**/.DS_Store": true,
+		"**/*.o": true,
+		"**/*.exe": true
+	}
+}
