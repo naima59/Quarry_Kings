@@ -1,29 +1,21 @@
 #ifndef UPGRADES_H
 #define UPGRADES_H
 #include <string>
-#include <cmath>
+#include <stdexcept>
+#include <iostream>
+#include "raylib.h"
 
 class Upgrades
 {
 public:
-    struct Upgrade 
-    {
-    std::string name;
-    int level;
-    float baseCost;
-    float costMultiplier;
-    float effectPerLevel;
-    bool unlocked;
-
-    float GetCurrentCost() const 
-    {
-        return baseCost * std::pow(costMultiplier, level);
-    }
-
-    float GetEffect() const 
-    {
-        return level * effectPerLevel;
-    }
-    };
+    struct Resource {
+    std::string id;
+    double amount = 0.0; 
+    double perSecond = 0.0;
+    int level = 0;};
+    Resource resourceTypes(std::string upgradeName);
+    void resourceManager(float& stoneCount, Resource& resourceType);
 };
+
+
 #endif
