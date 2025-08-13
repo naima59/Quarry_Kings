@@ -2,24 +2,43 @@
 
 Upgrades::Resource Upgrades::resourceTypes(std::string upgradeName)
 {
-    if (upgradeName == "pickAxeQuality")
+    if (upgradeName == "pickaxeQuality")
     {
-        return {"pickAxeQuality", 10, 0, 1};  
+        return {"pickaxeQuality", 1, 0, 10, 1.8, 1.12, 10, 0};  
     }
+
+    if (upgradeName == "villager")
+    {
+        return {"villager", 1, .01, 50,1.5, 1.12, 50, 0};
+    }
+
+    if (upgradeName == "oxen")
+    {
+        return {"oxen", 1, .05, 1000,1.15, 1.15, 800, 0};
+    }
+
     throw std::runtime_error("Unknown resource: " + upgradeName);
 }
 
 void Upgrades::resourceManager(float& stoneCount, Resource& resourceType)
 {
-    if (stoneCount >= resourceType.amount)
+
+    if(resourceType.level == 0 && stoneCount >= resourceType.baseCost)
     {
-        stoneCount -= resourceType.amount;
-        resourceType.level += 1;
-        resourceType.amount *= 1.5;
-        resourceType.perSecond += .0025;
-        
-        char logMessage[128];
-        sprintf(logMessage, "Resource Level: %d  | Resource Amount: %.2f | Stone Per Scond: %.4f", resourceType.level, resourceType.amount, resourceType.perSecond);
-        TraceLog(LOG_INFO, "%s", logMessage);
+        stoneCount -= resourceType.baseCost;
+        resourceType.level++;
+        resourceType.amount++;
+        resourceType.totalCost = resourceType.baseCost * pow(resourceType.costScale, resourceType.level);
+        globalPerSecond += resourceType.perSecond;
     }
+    else if(resourceType.level != 0 && stoneCount >= resourceType.totalCost)
+    {
+        stoneCount -= resourceType.totalCost;
+        resourceType.level++;
+        resourceType.amount++;
+        resourceType.perSecond = resourceType.perSecond * pow(resourceType.rateScale, resourceType.level);
+        resourceType.totalCost = resourceType.baseCost * pow(resourceType.costScale, resourceType.level);
+        globalPerSecond += resourceType.perSecond;
+    }
+
 };
