@@ -4,17 +4,17 @@ Upgrades::Resource Upgrades::resourceTypes(std::string upgradeName)
 {
     if (upgradeName == "pickaxeQuality")
     {
-        return {"pickaxeQuality", 1, 0, 10, 1.8, 1.12, 10, 0};  
+        return {"pickaxeQuality", 1, 0, 10, 1.8, 1.92, 10, 0};  
     }
 
     if (upgradeName == "villager")
     {
-        return {"villager", 1, .01, 50,1.5, 1.12, 50, 0};
+        return {"villager", 1, .01, 1,1.5, 1.92, 1, 0};
     }
 
     if (upgradeName == "oxen")
     {
-        return {"oxen", 1, .05, 1000,1.15, 1.15, 800, 0};
+        return {"oxen", 1, .05, 800,1.15, 1.15, 800, 0};
     }
 
     throw std::runtime_error("Unknown resource: " + upgradeName);

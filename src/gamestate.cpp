@@ -2,22 +2,28 @@
 
 void Gamestate::SceneManager()
 {
-    while(gameState.InitSplashVictory == false)
+    while(!gameState.shouldExit && !WindowShouldClose())
     {
-       gameState.InitSplashScreen();
-    }
-    while(gameState.SplashVictory == false)
-    {
-       gameState.SplashScreen();
-    }
-    while(gameState.InitLevelVictory == false)
-    {
-        gameState.InitLevel();
-    }
-    while(gameState.GameVictory == false)
-    {
-        gameState.ProcessInput();
+        if(!gameState.initSplashVictory)
+        {
+            gameState.InitSplashScreen();
+        }
+        else if(!gameState.splashVictory)
+        {
+            gameState.SplashScreen();
+        }
+        else if(!gameState.initLevelVictory)
+        {
+            gameState.InitLevel();
+        }
+        else if(!gameState.gameVictory)
+        {
+            gameState.ProcessInput();
+        }
+        else if(gameState.gameVictory)
+        {
+            gameState.Victory();
+        }
     }
     gameState.UnloadGame();
-
 }
