@@ -21,8 +21,8 @@ public:
     float rateScale = 0.0;
     int totalCost = 0;
     int level = 0;};
-    Resource resourceTypes(std::string upgradeName);
-    void resourceManager(float& stoneCount, Resource& resourceType);
+    Resource ResourceTypes(std::string upgradeName);
+    void ResourceManager(float& stoneCount, Resource& resourceType);
     float globalPerSecond = 0.f;
 };
 

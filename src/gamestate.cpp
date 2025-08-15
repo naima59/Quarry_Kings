@@ -1,29 +1,35 @@
 #include "gamestate.h"
 
-void Gamestate::SceneManager()
+void GameState::SceneManager()
 {
-    while(!gameState.shouldExit && !WindowShouldClose())
+    //initialize splash screen
+    if(!gameState.initSplashBool)
     {
-        if(!gameState.initSplashVictory)
-        {
-            gameState.InitSplashScreen();
-        }
-        else if(!gameState.splashVictory)
-        {
-            gameState.SplashScreen();
-        }
-        else if(!gameState.initLevelVictory)
-        {
-            gameState.InitLevel();
-        }
-        else if(!gameState.gameVictory)
-        {
-            gameState.ProcessInput();
-        }
-        else if(gameState.gameVictory)
-        {
-            gameState.Victory();
-        }
+        gameState.InitSplashScreen();
     }
-    gameState.UnloadGame();
+    //splash screen
+    else if(!gameState.splashBool)
+    {
+        gameState.SplashScreen();
+    }
+    //initialize game level
+    else if(!gameState.initLevelBool)
+    {
+        gameState.InitLevel();
+    }
+    //game
+    else if(!gameState.gameVictory)
+    {
+        gameState.ProcessInput();
+    }
+    //victory screen
+    else if(gameState.gameVictory)
+    {
+        gameState.Victory();
+    }
+    else 
+    {
+        gameState.UnloadGame();
+    }
+    
 }

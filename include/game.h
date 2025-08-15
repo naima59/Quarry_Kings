@@ -14,14 +14,23 @@ public:
     void UnloadGame();
     const int screenWidth = 1920;
 	const int screenHeight = 1080;
-    bool initSplashVictory = false;
-    bool splashVictory = false;
-    bool initLevelVictory = false;
+    bool initSplashBool = false;
+    bool splashBool = false;
+    bool initLevelBool = false;
     bool gameVictory = false;
-    bool shouldExit = false;
     bool restartGame = false;
     
 private:
+    typedef struct {
+        double start;
+        bool running;
+    } Timer;
+
+    void StartTimer(Timer *t);
+    double GetElapsed(Timer *t);
+    void StopTimer(Timer *t);
+    Timer gameTimer;
+    
     Texture2D ImageToTexture(const char* fileName, int resizeWidth, int resizeHeight);
     Texture2D splashTexture;
     Texture2D backGroundTexture;
@@ -33,8 +42,8 @@ private:
     Texture2D oxenTexture;
     std::vector<Texture2D> textures;
 
-    Rectangle startBounds;
-    Rectangle exitBounds;
+    Rectangle splashBounds;
+    Rectangle victoryBounds;
     Rectangle newGameBounds;
     Rectangle stoneBounds;
     Rectangle pickaxeBounds;
@@ -44,15 +53,20 @@ private:
     float stoneCount;
     float globalPerSecond;
     float globalPerClick;
-    double lastTime;
+    float time;
+    float lastTime;
+    float timeElapsedFontSize;
+    double gameElapsedTime;
+
+    int splashX;
+    int splashY;
+    int victoryX;
+    int victoryY;
     int startX;
     int startY;
-    int exitX;
-    int exitY;
     int newGameX;
     int newGameY;
     int startFontSize;
-    int exitFontSize;
     int newGameFontSize;
     int stoneWidth;
     int stoneHeight;
@@ -73,6 +87,8 @@ private:
     int globalPerClickX;
     int globalPerClickY;
     int globalPerClickFontSize;
+    int timeElapsedX;
+    int timeElapsedY;
 
     Upgrades upgradeOption;
     Upgrades::Resource pickaxeUpgrade;

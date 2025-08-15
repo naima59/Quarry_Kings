@@ -2,7 +2,7 @@
 #define GAMESTATE_H
 #include "game.h"
 
-class Gamestate
+class GameState
 {
 public:
     void SceneManager();
@@ -10,6 +10,5 @@ private:
     Game gameState;
 
 };
-
 
 #endif

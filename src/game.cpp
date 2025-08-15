@@ -9,6 +9,27 @@ Texture2D Game::ImageToTexture(const char* fileName, int resizeWidth, int resize
     return NewTexture;
 }
 
+void Game::StartTimer(Timer *t) 
+{
+    if (t) 
+    {
+        t->start = GetTime();
+        t->running = true;
+    }
+}
+
+double Game::GetElapsed(Timer *t) 
+{
+    if (t && t->running) return GetTime() - t->start;
+    return 0;
+}
+
+void Game::StopTimer(Timer *t) 
+{
+    if (t) t->running = false;
+}
+
+
 void Game::InitSplashScreen()
 {
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
@@ -27,20 +48,15 @@ void Game::InitSplashScreen()
     //splash screen
     splashTexture = ImageToTexture("Quarry_Kings_Splash.png", screenWidth, screenHeight);
     textures.push_back(splashTexture);
+    splashX = 0;
+    splashY = 0;
+    splashBounds = { float(splashX), float(splashY), (float)screenWidth, (float)screenHeight };
 
     //START
     startFontSize = 90;
     int startTextWidth = MeasureText("START", startFontSize);
     startX = (screenWidth / 2) - (startTextWidth / 2);
-    startY = (screenHeight / 3);
-    startBounds = { float(startX), float(startY), (float)startTextWidth, (float)startFontSize };
-
-    //EXIT
-    exitFontSize = 90;
-    int exitTextWidth = MeasureText("EXIT", exitFontSize);
-    exitX = (screenWidth / 2) - (exitTextWidth / 2);
-    exitY = (screenHeight / 2);
-    exitBounds = { float(exitX), float(exitY), (float)exitTextWidth, (float)exitFontSize };
+    startY = (screenHeight / 2);
 
     //music
     music = LoadMusicStream("quarry_kings_music.wav");
@@ -55,7 +71,7 @@ void Game::InitSplashScreen()
     victorySound = LoadSound("victory.wav");
     SetSoundVolume(victorySound, 0.2f);
 
-    initSplashVictory = true;
+    initSplashBool = true;
 }
 
 void Game::SplashScreen()
@@ -66,21 +82,13 @@ void Game::SplashScreen()
     DrawTexture(splashTexture, 0, 0, WHITE);
 
     //Start
-    DrawText("START", startX, startY, startFontSize, DARKGRAY);
-
-    //Exit
-    DrawText("EXIT", exitX, exitY, exitFontSize, DARKGRAY);
+    DrawText("START", startX, startY, startFontSize, WHITE);
 
     Vector2 mousePos = GetMousePosition();
 
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, startBounds)) 
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, splashBounds)) 
     {
-        splashVictory = true;
-    }
-
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, exitBounds)) 
-    {
-        shouldExit = true;
+        splashBool = true;
     }
 
     //MOUSE ICON
@@ -98,6 +106,9 @@ void Game::InitLevel()
     
     victoryTexture = ImageToTexture("victory.png", screenWidth, screenHeight);
     textures.push_back(victoryTexture);
+    victoryX = 0;
+    victoryY = 0;
+    victoryBounds = { float(victoryX), float(victoryY), (float)screenWidth, (float)screenHeight };
 
     //clickable stone
     stoneWidth = 400;
@@ -136,9 +147,9 @@ void Game::InitLevel()
     oxenBounds = {(float)oxenX, (float)oxenY, (float)oxenWidth, (float)oxenHeight};
     
     //Load Upgrade Data
-    pickaxeUpgrade = upgradeOption.resourceTypes("pickaxeQuality");
-    villagerUpgrade = upgradeOption.resourceTypes("villager");
-    oxenUpgrade = upgradeOption.resourceTypes("oxen");
+    pickaxeUpgrade = upgradeOption.ResourceTypes("pickaxeQuality");
+    villagerUpgrade = upgradeOption.ResourceTypes("villager");
+    oxenUpgrade = upgradeOption.ResourceTypes("oxen");
 
     //stone count
     stoneCount = 0.f;
@@ -150,40 +161,44 @@ void Game::InitLevel()
 
     //stone per second 
     globalPerSecond = 0.f;
-    const char* globalPerSecondText = TextFormat("Per Second: %.2f", globalPerSecond);
+    const char* globalPerSecondText = TextFormat("Per Second: %2.2f", globalPerSecond);
     globalPerSecondFontSize = 40;
     int globalPerSecondTextWidth = MeasureText(globalPerSecondText, globalPerSecondFontSize);
     globalPerSecondX = (screenWidth / 2) - (globalPerSecondTextWidth / 2);
-    globalPerSecondY = (screenHeight / 6);
+    globalPerSecondY = (stoneCountY + stoneCountFontSize);
 
     //stone per click
     globalPerClick = 1.f;
-    const char* globalPerClickText = TextFormat("Per Click: %.2f", globalPerClick);
+    const char* globalPerClickText = TextFormat("Per Click: %2.2f", globalPerClick);
     globalPerClickFontSize = 40;
     int globalPerClickTextWidth = MeasureText(globalPerClickText, globalPerClickFontSize);
     globalPerClickX = (screenWidth / 2) - (globalPerClickTextWidth / 2);
-    globalPerClickY = (2 * screenHeight / 10);
+    globalPerClickY = (globalPerSecondY + globalPerSecondFontSize);
 
-    //NEW GAME
+    //elapsed time
+    const char* timeElapsed = TextFormat("Time Elapsed: %2.2f", gameElapsedTime);
+    timeElapsedFontSize = 40;
+    int timeElapsedTextWidth = MeasureText(timeElapsed, timeElapsedFontSize);
+    timeElapsedX = (screenWidth / 2) - (timeElapsedTextWidth / 2);
+    timeElapsedY = (globalPerClickY + globalPerClickFontSize);
+
+    //new game
     newGameFontSize = 90;
     int newGameTextWidth = MeasureText("NEW GAME", newGameFontSize);
     newGameX = (screenWidth / 2) - (newGameTextWidth / 2);
     newGameY = (screenHeight / 5 * 3);
-    newGameBounds = { float(newGameX), float(newGameY), (float)newGameTextWidth, (float)newGameFontSize };
 
-    //EXIT
-    exitFontSize = 90;
-    int exitTextWidth = MeasureText("EXIT", exitFontSize);
-    exitX = (screenWidth / 2) - (exitTextWidth / 2);
-    exitY = (screenHeight / 3 * 2);
-    exitBounds = { float(exitX), float(exitY), (float)exitTextWidth, (float)exitFontSize };
-    
     lastTime = 0.0;
-    initLevelVictory = true;
+    gameTimer = {0 };
+    StartTimer(&gameTimer);
+    initLevelBool = true;
 };
 
 void Game::ProcessInput()
 {
+    time = GetTime();
+    float pulse = 1.f * sinf(time * 4);
+    gameElapsedTime = GetElapsed(&gameTimer);
     BeginDrawing();
     UpdateMusicStream(music);
     ClearBackground(RAYWHITE);
@@ -195,9 +210,6 @@ void Game::ProcessInput()
     DrawTexture(villagerTexture,villagerX,villagerY,WHITE);
     DrawTexture(oxenTexture,oxenX,oxenY,WHITE);
 
-    //variables that need to be updated
-    float time = GetTime();
-    float pulse = 0.5f + 0.5f * sinf(time * 4);
     bool isStoneHovered = CheckCollisionPointRec(mousePos, stoneBounds);
     globalPerSecond = upgradeUpdate.globalPerSecond;
     
@@ -232,7 +244,7 @@ void Game::ProcessInput()
         {
             PlaySound(upgradeSound);
         }
-        upgradeUpdate.resourceManager(stoneCount, pickaxeUpgrade);
+        upgradeUpdate.ResourceManager(stoneCount, pickaxeUpgrade);
         globalPerClick = pickaxeUpgrade.amount;
 
     }
@@ -243,7 +255,7 @@ void Game::ProcessInput()
         {
             PlaySound(upgradeSound);
         }
-        upgradeUpdate.resourceManager(stoneCount, villagerUpgrade);
+        upgradeUpdate.ResourceManager(stoneCount, villagerUpgrade);
     } 
     
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, oxenBounds)) 
@@ -252,7 +264,7 @@ void Game::ProcessInput()
         {
             PlaySound(upgradeSound);
         }
-        upgradeUpdate.resourceManager(stoneCount, oxenUpgrade);
+        upgradeUpdate.ResourceManager(stoneCount, oxenUpgrade);
     }
     
     //after upgrade checks
@@ -264,22 +276,23 @@ void Game::ProcessInput()
 
     if(stoneCount >= 1000000)
     {
+        StopTimer(&gameTimer);
         PlaySound(victorySound);
         gameVictory = true;
     }
     
     //resource and upgrade text
-    DrawText(TextFormat("Stone: %.2f", stoneCount), stoneCountX, stoneCountY, stoneCountFontSize, DARKGRAY);
-    DrawText(TextFormat("Per Second: %.2f", globalPerSecond), globalPerSecondX, globalPerSecondY, globalPerSecondFontSize, DARKGRAY);
-    DrawText(TextFormat("Per Click: %.2f", globalPerClick), globalPerClickX, globalPerClickY, globalPerClickFontSize, DARKGRAY);
-    DrawText(TextFormat("Pickaxe Quality: %d", pickaxeUpgrade.level), pickaxeX, pickaxeY - 60, 35, DARKGRAY);
-    DrawText(TextFormat("Cost: %d", pickaxeUpgrade.totalCost), pickaxeX, pickaxeY - 30, 35, DARKGRAY);
-    DrawText(TextFormat("Villagers: %d", villagerUpgrade.level), villagerX, villagerY - 60, 35, DARKGRAY);
-    DrawText(TextFormat("Cost: %d", villagerUpgrade.totalCost), villagerX, villagerY - 30, 35, DARKGRAY);
-    DrawText(TextFormat("Oxen: %d", oxenUpgrade.level), oxenX, oxenY - 60, 35, DARKGRAY);
-    DrawText(TextFormat("Cost: %d", oxenUpgrade.totalCost), oxenX, oxenY - 30, 35, DARKGRAY);
-    DrawText(TextFormat("Time Elapsed: %.2f", time), screenWidth / 2, 200, 20, DARKGRAY);
-
+    DrawText(TextFormat("Stone: %.2f", stoneCount), stoneCountX, stoneCountY, stoneCountFontSize, WHITE);
+    DrawText(TextFormat("Per Second: %.2f", globalPerSecond), globalPerSecondX, globalPerSecondY, globalPerSecondFontSize, WHITE);
+    DrawText(TextFormat("Per Click: %.2f", globalPerClick), globalPerClickX, globalPerClickY, globalPerClickFontSize, WHITE);
+    DrawText(TextFormat("Time Elapsed: %.2f", gameElapsedTime), timeElapsedX, timeElapsedY, timeElapsedFontSize, WHITE);
+    DrawText(TextFormat("Pickaxe Quality: %d", pickaxeUpgrade.level), pickaxeX, pickaxeY - 60, 35, WHITE);
+    DrawText(TextFormat("Cost: %d", pickaxeUpgrade.totalCost), pickaxeX, pickaxeY - 30, 35, WHITE);
+    DrawText(TextFormat("Villagers: %d", villagerUpgrade.level), villagerX, villagerY - 60, 35, WHITE);
+    DrawText(TextFormat("Cost: %d", villagerUpgrade.totalCost), villagerX, villagerY - 30, 35, WHITE);
+    DrawText(TextFormat("Oxen: %d", oxenUpgrade.level), oxenX, oxenY - 60, 35, WHITE);
+    DrawText(TextFormat("Cost: %d", oxenUpgrade.totalCost), oxenX, oxenY - 30, 35, WHITE);
+    
     //MOUSE ICON
     DrawTexture(pickaxeMouse, mousePos.x, mousePos.y, WHITE);
     EndDrawing();
@@ -291,13 +304,12 @@ void Game::Victory()
     ClearBackground(RAYWHITE);
     Vector2 mousePos = GetMousePosition();
     DrawTexture(victoryTexture, 0, 0, WHITE);
+
     //NEW GAME
-    DrawText("NEW GAME", newGameX, newGameY, newGameFontSize, DARKGRAY);
+    DrawText("NEW GAME", newGameX, newGameY, newGameFontSize, WHITE);
+    DrawText(TextFormat("Time Elapsed: %.2f", time), timeElapsedX, newGameY + newGameFontSize, timeElapsedFontSize, WHITE);
 
-    //Exit
-    DrawText("EXIT", exitX, exitY, exitFontSize, DARKGRAY);
-
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, newGameBounds)) 
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, victoryBounds)) 
     {
         stoneCount = 0;
         globalPerClick = 1.f;
@@ -315,11 +327,6 @@ void Game::Victory()
         oxenUpgrade.totalCost = villagerUpgrade.baseCost;
         oxenUpgrade.perSecond = .05;        
         gameVictory = false;
-    }
-
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, exitBounds)) 
-    {
-        shouldExit = true;
     }
 
     //MOUSE ICON
