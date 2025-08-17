@@ -30,8 +30,8 @@ Each upgrade boosts your stone production through click or passive generation.
 🎥 Gameplay Previews
 🏰 Game Intro
 The King's decree and your quest to mine 1 million stone begins...
-![Game Intro](https://github.com/naima59/Quarry_Kings/tree/main/demo/Quarry_Kings_Intro.gif?raw=true)
+![Game Intro](https://github.com/naima59/Quarry_Kings/blob/main/demo/Quarry_Kings_Intro.gif?raw=true)
 
 ⛏️ Moment-to-Moment Gameplay
 Click, upgrade, and race the clock to build the fortress.
-![Gameplay](https://github.com/naima59/Quarry_Kings/tree/main/demo/Quarry_Kings_Gameplay.gif?raw=true)
+![Gameplay](https://github.com/naima59/Quarry_Kings/blob/main/demo/Quarry_Kings_Gameplay.gif?raw=true)
