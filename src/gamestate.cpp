@@ -13,6 +13,10 @@ void GameState::SceneManager()
         gameState.SplashScreen();
     }
     //initialize game level
+    else if(!gameState.gameObjectiveSplashBool)
+    {
+        gameState.GameObjectiveSplashScreen();
+    }
     else if(!gameState.initLevelBool)
     {
         gameState.InitLevel();

@@ -8,22 +8,25 @@
 #include <cmath>
 #include <math.h>
 #include <vector>
+#include <fstream>
+#include <algorithm>
+#include <sstream>
+#include <iomanip>
+
 
 class Upgrades
 {
 public:
     struct Resource {
     std::string id;
-    double amount = 0.0; 
-    double perSecond = 0.0;
+    int perSecond = 0;
     int baseCost = 0;
-    float costScale = 0.0;
-    float rateScale = 0.0;
     int totalCost = 0;
-    int level = 0;};
+    int level = 1;};
     Resource ResourceTypes(std::string upgradeName);
     void ResourceManager(float& stoneCount, Resource& resourceType);
-    float globalPerSecond = 0.f;
+    int globalPerSecond = 0;
+    float costScale = 1.15f;
 };
 
 

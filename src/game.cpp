@@ -29,6 +29,54 @@ void Game::StopTimer(Timer *t)
     if (t) t->running = false;
 }
 
+std::string Game::formatTime(float time) {
+    std::ostringstream stream;
+    stream << std::fixed << std::setprecision(2) << time;
+    return stream.str();
+}
+
+std::vector<float> Game::ReadTimesFromFile(const std::string& filename) {
+    std::vector<float> times;
+    std::ifstream file(filename);
+    float time;
+    while (file >> time) {
+        times.push_back(time);
+    }
+    return times;
+}
+
+void Game::WriteTimesToFile(const std::string& filename, const std::vector<float>& times) {
+    std::ofstream file(filename);
+    for (float t : times) {
+        file << t << "\n";
+    }
+}
+
+void Game::UpdateFastestTimes(float newTime, const std::string& filename) {
+    std::vector<float> times = ReadTimesFromFile(filename);
+    times.push_back(newTime);
+    std::sort(times.begin(), times.end());
+    if (times.size() > 5) times.resize(5); // Keep top 5
+    WriteTimesToFile(filename, times);
+}
+
+void Game::DrawFastestTimes(const std::string& filename, int x, int y, int fontSize) {
+    std::vector<float> times = ReadTimesFromFile(filename);
+    for (size_t i = 0; i < times.size(); ++i) {
+        std::string text = "Time " + std::to_string(i + 1) + ": " + formatTime(times[i]) + "s";
+        DrawText(text.c_str(), x, y + i * (fontSize + 5), fontSize, WHITE);
+    }
+}
+
+std::string formatWithCommas(int value) {
+    std::string num = std::to_string(value);
+    int insertPosition = num.length() - 3;
+    while (insertPosition > 0) {
+        num.insert(insertPosition, ",");
+        insertPosition -= 3;
+    }
+    return num;
+}
 
 void Game::InitSplashScreen()
 {
@@ -52,6 +100,32 @@ void Game::InitSplashScreen()
     splashY = 0;
     splashBounds = { float(splashX), float(splashY), (float)screenWidth, (float)screenHeight };
 
+    //game objective splash screen
+    gameObjectiveTexture = ImageToTexture("Game_Objective_Splash.png", screenWidth, screenHeight);
+    textures.push_back(gameObjectiveTexture);
+    gameObjectiveBounds = { float(splashX), float(splashY), (float)screenWidth, (float)screenHeight };
+    gameObjectiveText = R"(
+        To the Esteemed Foreman of the Quarry,
+
+        By decree of His Majesty, sovereign of these lands and protector of the realm, 
+        
+        thou art hereby commanded to extract one million stone from the royal quarry with utmost haste.
+
+        This monumental harvest shall lay the foundation for a grand fortress -
+        
+        a bastion of strength to guard our borders and inspire our people.
+
+        Tools, laborers, and provisions have been granted to aid thee in this noble endeavor. 
+        
+        Waste not a moment, for time is the enemy of progress.
+
+        May your pick strike true and your will endure.
+
+        - The King's Steward
+        )";
+    gameObjectiveTextY = GetScreenHeight();
+
+
     //START
     startFontSize = 90;
     int startTextWidth = MeasureText("START", startFontSize);
@@ -64,6 +138,8 @@ void Game::InitSplashScreen()
     PlayMusicStream(music);
 
     //sounds
+    gameObjectiveSound = LoadSound("game_objective.wav");
+    SetSoundVolume(gameObjectiveSound, 0.2f);
     miningSound = LoadSound("mining.wav");
 	SetSoundVolume(miningSound, 0.2f);
     upgradeSound = LoadSound("upgrade.wav");
@@ -80,6 +156,7 @@ void Game::SplashScreen()
     ClearBackground(RAYWHITE);
     UpdateMusicStream(music);
     DrawTexture(splashTexture, 0, 0, WHITE);
+    PlaySound(gameObjectiveSound);
 
     //Start
     DrawText("START", startX, startY, startFontSize, WHITE);
@@ -95,6 +172,31 @@ void Game::SplashScreen()
     DrawTexture(pickaxeMouse, mousePos.x, mousePos.y, WHITE);
     EndDrawing();
 
+}
+
+void Game::GameObjectiveSplashScreen()
+{
+    BeginDrawing();
+    ClearBackground(RAYWHITE);
+    DrawTexture(gameObjectiveTexture, 0, 0, WHITE);
+    Vector2 mousePos = GetMousePosition();
+
+    if(!(gameObjectiveTextY < GetScreenHeight() / 4))
+    {
+        gameObjectiveTextY -= 1;
+    }
+    
+    DrawText(gameObjectiveText, GetScreenWidth()/2 - MeasureText(gameObjectiveText, 30)/2, gameObjectiveTextY, 30, WHITE);
+
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, gameObjectiveBounds)) 
+    {
+        StopSound(gameObjectiveSound);
+        gameObjectiveSplashBool = true;
+    }
+
+    //MOUSE ICON
+    DrawTexture(pickaxeMouse, mousePos.x, mousePos.y, WHITE);
+    EndDrawing();
 }
 
 void Game::InitLevel()
@@ -125,7 +227,7 @@ void Game::InitLevel()
     pickaxeTexture = ImageToTexture("pickaxe.png", pickaxeWidth, pickaxeHeight);
     textures.push_back(pickaxeTexture);
 	pickaxeX = (screenWidth / 4) - (pickaxeTexture.width / 2);
-	pickaxeY = (screenHeight / 3) - (pickaxeTexture.height / 2);
+	pickaxeY = (screenHeight / 4) - (pickaxeTexture.height / 2) - 100;
 	pickaxeBounds = {(float)pickaxeX, (float)pickaxeY, (float)pickaxeWidth, (float)pickaxeHeight};
 
     //villager upgrade
@@ -134,8 +236,17 @@ void Game::InitLevel()
     villagerTexture = ImageToTexture("villager.png", villagerWidth, villagerHeight);
     textures.push_back(villagerTexture);
     villagerX = (screenWidth / 4) - (villagerTexture.width / 2);
-    villagerY = ((screenHeight / 2) - (villagerTexture.height / 2)) + 30;
+    villagerY = ((screenHeight / 4) - (villagerTexture.height / 2)) + 150;
     villagerBounds = {(float)villagerX, (float)villagerY, (float)villagerWidth, (float)villagerHeight};
+
+    //cart upgrade
+    int cartWidth = 150;
+    int cartHeight = 150;
+    cartTexture = ImageToTexture("cart.png", cartWidth, cartHeight);
+    textures.push_back(cartTexture);
+    cartX = (screenWidth / 4) - (cartTexture.width / 2);
+    cartY = ((screenHeight / 4) - (cartTexture.height / 2)) + 400;
+    cartBounds = {(float)cartX, (float)cartY, (float)cartWidth, (float)cartHeight};
 
     //oxen upgrade
     int oxenWidth = 150;
@@ -143,24 +254,25 @@ void Game::InitLevel()
     oxenTexture = ImageToTexture("oxen.png", oxenWidth, oxenHeight);
     textures.push_back(oxenTexture);
     oxenX = (screenWidth / 4) - (oxenTexture.width / 2);
-    oxenY = ((2 * screenHeight / 3) - (oxenTexture.height / 2)) + 60;
+    oxenY = ((screenHeight / 4) - (oxenTexture.height / 2)) + 650;
     oxenBounds = {(float)oxenX, (float)oxenY, (float)oxenWidth, (float)oxenHeight};
     
     //Load Upgrade Data
     pickaxeUpgrade = upgradeOption.ResourceTypes("pickaxeQuality");
     villagerUpgrade = upgradeOption.ResourceTypes("villager");
     oxenUpgrade = upgradeOption.ResourceTypes("oxen");
+    cartUpgrade = upgradeOption.ResourceTypes("cart");
 
     //stone count
     stoneCount = 0.f;
-    const char* stoneCountText = TextFormat("Stone: %4.2f", stoneCount);
+    const char* stoneCountText = TextFormat("Stone: %7d", stoneCount);
     stoneCountFontSize = 80;
     int stoneCountTextWidth = MeasureText(stoneCountText, stoneCountFontSize);
     stoneCountX = (screenWidth / 2) - (stoneCountTextWidth / 2);
     stoneCountY = (screenHeight / 10);
 
     //stone per second 
-    globalPerSecond = 0.f;
+    globalPerSecond = 0;
     const char* globalPerSecondText = TextFormat("Per Second: %2.2f", globalPerSecond);
     globalPerSecondFontSize = 40;
     int globalPerSecondTextWidth = MeasureText(globalPerSecondText, globalPerSecondFontSize);
@@ -168,19 +280,18 @@ void Game::InitLevel()
     globalPerSecondY = (stoneCountY + stoneCountFontSize);
 
     //stone per click
-    globalPerClick = 1.f;
-    const char* globalPerClickText = TextFormat("Per Click: %2.2f", globalPerClick);
-    globalPerClickFontSize = 40;
-    int globalPerClickTextWidth = MeasureText(globalPerClickText, globalPerClickFontSize);
-    globalPerClickX = (screenWidth / 2) - (globalPerClickTextWidth / 2);
-    globalPerClickY = (globalPerSecondY + globalPerSecondFontSize);
+    globalPerClick = 1;
 
     //elapsed time
     const char* timeElapsed = TextFormat("Time Elapsed: %2.2f", gameElapsedTime);
     timeElapsedFontSize = 40;
     int timeElapsedTextWidth = MeasureText(timeElapsed, timeElapsedFontSize);
     timeElapsedX = (screenWidth / 2) - (timeElapsedTextWidth / 2);
-    timeElapsedY = (globalPerClickY + globalPerClickFontSize);
+    timeElapsedY = (globalPerSecondY + globalPerSecondFontSize);
+
+    //fastest times
+    fastestTimeX = (screenWidth / 4);
+    fastestTimeY = (screenHeight / 9);
 
     //new game
     newGameFontSize = 90;
@@ -208,6 +319,7 @@ void Game::ProcessInput()
     DrawTexture(backGroundTexture, 0, 0, WHITE);
     DrawTexture(pickaxeTexture,pickaxeX,pickaxeY,WHITE);
     DrawTexture(villagerTexture,villagerX,villagerY,WHITE);
+    DrawTexture(cartTexture,cartX,cartY,WHITE);
     DrawTexture(oxenTexture,oxenX,oxenY,WHITE);
 
     bool isStoneHovered = CheckCollisionPointRec(mousePos, stoneBounds);
@@ -245,7 +357,6 @@ void Game::ProcessInput()
             PlaySound(upgradeSound);
         }
         upgradeUpdate.ResourceManager(stoneCount, pickaxeUpgrade);
-        globalPerClick = pickaxeUpgrade.amount;
 
     }
 
@@ -257,6 +368,15 @@ void Game::ProcessInput()
         }
         upgradeUpdate.ResourceManager(stoneCount, villagerUpgrade);
     } 
+
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, cartBounds)) 
+    {
+        if(cartUpgrade.level == 0 && stoneCount >= cartUpgrade.baseCost || cartUpgrade.level != 0 && stoneCount >= cartUpgrade.totalCost)
+        {
+            PlaySound(upgradeSound);
+        }
+        upgradeUpdate.ResourceManager(stoneCount, cartUpgrade);
+    }
     
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, oxenBounds)) 
     {
@@ -266,7 +386,7 @@ void Game::ProcessInput()
         }
         upgradeUpdate.ResourceManager(stoneCount, oxenUpgrade);
     }
-    
+
     //after upgrade checks
     if(time - lastTime >= 1.0)
     {
@@ -280,19 +400,24 @@ void Game::ProcessInput()
         PlaySound(victorySound);
         gameVictory = true;
     }
+
+    //stone count
+    stoneCountWholePart = (int)stoneCount;
+    formattedStoneCount = formatWithCommas(stoneCountWholePart);
     
     //resource and upgrade text
-    DrawText(TextFormat("Stone: %.2f", stoneCount), stoneCountX, stoneCountY, stoneCountFontSize, WHITE);
-    DrawText(TextFormat("Per Second: %.2f", globalPerSecond), globalPerSecondX, globalPerSecondY, globalPerSecondFontSize, WHITE);
-    DrawText(TextFormat("Per Click: %.2f", globalPerClick), globalPerClickX, globalPerClickY, globalPerClickFontSize, WHITE);
+    DrawText(("Stone: " + formattedStoneCount).c_str(), stoneCountX, stoneCountY, stoneCountFontSize, WHITE);
+    DrawText(TextFormat("Per Second: %d", globalPerSecond), globalPerSecondX, globalPerSecondY, globalPerSecondFontSize, WHITE);
     DrawText(TextFormat("Time Elapsed: %.2f", gameElapsedTime), timeElapsedX, timeElapsedY, timeElapsedFontSize, WHITE);
     DrawText(TextFormat("Pickaxe Quality: %d", pickaxeUpgrade.level), pickaxeX, pickaxeY - 60, 35, WHITE);
     DrawText(TextFormat("Cost: %d", pickaxeUpgrade.totalCost), pickaxeX, pickaxeY - 30, 35, WHITE);
     DrawText(TextFormat("Villagers: %d", villagerUpgrade.level), villagerX, villagerY - 60, 35, WHITE);
     DrawText(TextFormat("Cost: %d", villagerUpgrade.totalCost), villagerX, villagerY - 30, 35, WHITE);
+    DrawText(TextFormat("Cart: %d", cartUpgrade.level), cartX, cartY - 60, 35, WHITE);
+    DrawText(TextFormat("Cost: %d", cartUpgrade.totalCost), cartX, cartY - 30, 35, WHITE);
     DrawText(TextFormat("Oxen: %d", oxenUpgrade.level), oxenX, oxenY - 60, 35, WHITE);
     DrawText(TextFormat("Cost: %d", oxenUpgrade.totalCost), oxenX, oxenY - 30, 35, WHITE);
-    
+
     //MOUSE ICON
     DrawTexture(pickaxeMouse, mousePos.x, mousePos.y, WHITE);
     EndDrawing();
@@ -302,12 +427,20 @@ void Game::Victory()
 {
     BeginDrawing();
     ClearBackground(RAYWHITE);
+    if(!newFastTimeSet)
+    {
+        UpdateFastestTimes(time,  fastestTimesFile);
+        newFastTimeSet = true;
+    }
+    
     Vector2 mousePos = GetMousePosition();
     DrawTexture(victoryTexture, 0, 0, WHITE);
 
     //NEW GAME
     DrawText("NEW GAME", newGameX, newGameY, newGameFontSize, WHITE);
     DrawText(TextFormat("Time Elapsed: %.2f", time), timeElapsedX, newGameY + newGameFontSize, timeElapsedFontSize, WHITE);
+    DrawText("Fastest Times:", fastestTimeX, fastestTimeY - 40, 40, WHITE);
+    DrawFastestTimes(fastestTimesFile, fastestTimeX, fastestTimeY, 40);
 
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, victoryBounds)) 
     {
@@ -316,16 +449,16 @@ void Game::Victory()
         globalPerSecond = 0;
         upgradeUpdate.globalPerSecond = 0;
         pickaxeUpgrade.level = 0;
-        pickaxeUpgrade.amount = 1;
         pickaxeUpgrade.totalCost = pickaxeUpgrade.baseCost;
         villagerUpgrade.level = 0;
-        villagerUpgrade.amount = 1;
         villagerUpgrade.totalCost = villagerUpgrade.baseCost;
-        villagerUpgrade.perSecond = .01;
         oxenUpgrade.level = 0;
-        oxenUpgrade.amount = 1;
-        oxenUpgrade.totalCost = villagerUpgrade.baseCost;
-        oxenUpgrade.perSecond = .05;        
+        oxenUpgrade.totalCost = villagerUpgrade.baseCost;  
+        cartUpgrade.level = 0;
+        cartUpgrade.totalCost = villagerUpgrade.baseCost;
+        lastTime = 0.0;
+        gameTimer = {0 };
+        StartTimer(&gameTimer);              
         gameVictory = false;
     }
 
@@ -345,6 +478,7 @@ void Game::UnloadGame()
     UnloadSound(victorySound);
     UnloadSound(upgradeSound);
 	UnloadSound(miningSound);
+    UnloadSound(gameObjectiveSound);
     
 	CloseAudioDevice();
 	CloseWindow();

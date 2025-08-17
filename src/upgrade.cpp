@@ -4,17 +4,22 @@ Upgrades::Resource Upgrades::ResourceTypes(std::string upgradeName)
 {
     if (upgradeName == "pickaxeQuality")
     {
-        return {"pickaxeQuality", 1, 0, 10, 1.8, 1.15, 10, 0};  
+        return {"pickaxeQuality", 1, 10, 10, 0};  
     }
 
     if (upgradeName == "villager")
     {
-        return {"villager", 1, .03, 50,1.16, 1.12, 50, 0};
+        return {"villager", 5, 50, 50, 0};
     }
+
+    if (upgradeName == "cart")
+    {
+        return {"cart", 50, 500,500, 0};
+    }    
 
     if (upgradeName == "oxen")
     {
-        return {"oxen", 1, .08, 800,1.03, 1.14, 800, 0};
+        return {"oxen", 500, 5000,5000, 0};
     }
 
     throw std::runtime_error("Unknown resource: " + upgradeName);
@@ -23,21 +28,18 @@ Upgrades::Resource Upgrades::ResourceTypes(std::string upgradeName)
 void Upgrades::ResourceManager(float& stoneCount, Resource& resourceType)
 {
 
-    if(resourceType.level == 0 && stoneCount >= resourceType.baseCost)
+    if(resourceType.level == 1 && stoneCount >= resourceType.baseCost)
     {
         stoneCount -= resourceType.baseCost;
         resourceType.level++;
-        resourceType.amount = resourceType.amount * pow(resourceType.rateScale, resourceType.level);
-        resourceType.totalCost = resourceType.baseCost * pow(resourceType.costScale, resourceType.level);
+        resourceType.totalCost = resourceType.baseCost * pow(costScale, resourceType.level);
         globalPerSecond += resourceType.perSecond;
     }
-    else if(resourceType.level != 0 && stoneCount >= resourceType.totalCost)
+    else if(resourceType.level != 1 && stoneCount >= resourceType.totalCost)
     {
         stoneCount -= resourceType.totalCost;
         resourceType.level++;
-        resourceType.amount = resourceType.amount * pow(resourceType.rateScale, resourceType.level);
-        resourceType.perSecond = resourceType.perSecond * pow(resourceType.rateScale, resourceType.level);
-        resourceType.totalCost = resourceType.baseCost * pow(resourceType.costScale, resourceType.level);
+        resourceType.totalCost =  resourceType.baseCost * pow(costScale, resourceType.level);
         globalPerSecond += resourceType.perSecond;
     }
 
