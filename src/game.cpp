@@ -346,8 +346,13 @@ void Game::ProcessInput()
     //clickables (resource and upgrades)
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, stoneBounds)) 
     {
-        stoneCount += globalPerClick;
+        if(IsSoundPlaying(miningSound))
+        {
+            StopSound(miningSound);
+        }
         PlaySound(miningSound);
+        stoneCount += globalPerClick;
+
     }
 
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, pickaxeBounds)) 

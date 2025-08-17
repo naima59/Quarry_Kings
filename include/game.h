@@ -1,6 +1,12 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include "raylib.h"
+#include "resource_dir.h"
+#include <vector>
+#include <fstream>
+#include <algorithm>
+#include <sstream>
 #include "upgrades.h"
 
 class Game

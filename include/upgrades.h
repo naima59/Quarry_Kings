@@ -1,18 +1,8 @@
 #ifndef UPGRADES_H
 #define UPGRADES_H
-#include "raylib.h"
-#include "resource_dir.h"
-#include <string>
-#include <stdexcept>
-#include <iostream>
-#include <cmath>
-#include <math.h>
-#include <vector>
-#include <fstream>
-#include <algorithm>
-#include <sstream>
-#include <iomanip>
 
+#include <math.h>
+#include <iomanip>
 
 class Upgrades
 {
